@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, map};
 use snafu::Snafu;
 use std::collections::HashMap;
+use tokio::io::AsyncWriteExt;
 
 #[derive(Debug, Snafu)]
 enum HealthcheckError {
@@ -194,9 +195,15 @@ impl HttpSink for StackdriverSink {
         });
 
         let body = serde_json::to_vec(&events).unwrap();
+        let mut encoder = async_compression::tokio::write::GzipEncoder::new(Vec::<u8>::new());
+
+        encoder.write_all(body.as_slice()).await?;
+
+        let body = encoder.into_inner();
 
         let mut request = Request::post(URI.clone())
             .header("Content-Type", "application/json")
+            .header("Content-Encoding", "gzip")
             .body(body)
             .unwrap();
 
