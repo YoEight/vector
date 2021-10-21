@@ -204,6 +204,7 @@ impl HttpSink for StackdriverSink {
         let mut request = Request::post(URI.clone())
             .header("Content-Type", "application/json")
             .header("Content-Encoding", "gzip")
+            .header("Content-Length", body.len())
             .body(body)
             .unwrap();
 
